@@ -1,0 +1,14 @@
+/Users/nico/Documents/Meli/challenge/MeliShortUrlApi/src/main/java/com/melishorturlapi/controller/ShortUrlHealthController.java
+/Users/nico/Documents/Meli/challenge/MeliShortUrlApi/src/main/java/com/melishorturlapi/repository/ShortUrlRepository.java
+/Users/nico/Documents/Meli/challenge/MeliShortUrlApi/src/main/java/com/melishorturlapi/model/UrlRequest.java
+/Users/nico/Documents/Meli/challenge/MeliShortUrlApi/src/main/java/com/melishorturlapi/MeliShortUrlApiApplication.java
+/Users/nico/Documents/Meli/challenge/MeliShortUrlApi/src/main/java/com/melishorturlapi/service/UrlHashService.java
+/Users/nico/Documents/Meli/challenge/MeliShortUrlApi/src/main/java/com/melishorturlapi/controller/ShortUrlController.java
+/Users/nico/Documents/Meli/challenge/MeliShortUrlApi/src/main/java/com/melishorturlapi/controller/ShortUrlStatsController.java
+/Users/nico/Documents/Meli/challenge/MeliShortUrlApi/src/main/java/com/melishorturlapi/service/ShortUrlService.java
+/Users/nico/Documents/Meli/challenge/MeliShortUrlApi/src/main/java/com/melishorturlapi/model/ShortUrl.java
+/Users/nico/Documents/Meli/challenge/MeliShortUrlApi/src/main/java/com/melishorturlapi/controller/ShortUrlRedirectController.java
+/Users/nico/Documents/Meli/challenge/MeliShortUrlApi/src/main/java/com/melishorturlapi/config/AppConfig.java
+/Users/nico/Documents/Meli/challenge/MeliShortUrlApi/src/main/java/com/melishorturlapi/config/CacheConfig.java
+/Users/nico/Documents/Meli/challenge/MeliShortUrlApi/src/main/java/com/melishorturlapi/config/DynamoDBConfig.java
+/Users/nico/Documents/Meli/challenge/MeliShortUrlApi/src/main/java/com/melishorturlapi/service/MetricsService.java

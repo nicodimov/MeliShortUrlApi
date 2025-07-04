@@ -1,0 +1,15 @@
+com/melishorturlapi/config/DynamoDBConfig.class
+com/melishorturlapi/MeliShortUrlApiApplication.class
+com/melishorturlapi/model/ShortUrl.class
+com/melishorturlapi/controller/ShortUrlRedirectController.class
+com/melishorturlapi/config/CacheConfig.class
+com/melishorturlapi/controller/ShortUrlHealthController.class
+com/melishorturlapi/service/MetricsService.class
+com/melishorturlapi/controller/ShortUrlController.class
+com/melishorturlapi/config/DynamoDBConfig$DynamoDBTableInitializer.class
+com/melishorturlapi/repository/ShortUrlRepository.class
+com/melishorturlapi/controller/ShortUrlStatsController.class
+com/melishorturlapi/service/UrlHashService.class
+com/melishorturlapi/model/UrlRequest.class
+com/melishorturlapi/config/AppConfig.class
+com/melishorturlapi/service/ShortUrlService.class
