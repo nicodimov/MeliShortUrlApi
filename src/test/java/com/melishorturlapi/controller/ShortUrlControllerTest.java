@@ -4,6 +4,10 @@ import com.melishorturlapi.config.AppConfig;
 import com.melishorturlapi.model.ShortUrl;
 import com.melishorturlapi.model.UrlRequest;
 import com.melishorturlapi.service.ShortUrlService;
+
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,7 +51,7 @@ class ShortUrlControllerTest {
         UrlRequest request = new UrlRequest();
         request.setOriginalUrl(ORIGINAL_URL);
 
-        when(shortUrlService.getShortUrlByOriginalUrl(ORIGINAL_URL)).thenReturn(Optional.empty());
+        when(shortUrlService.getShortUrlByOriginalUrl(ORIGINAL_URL)).thenReturn(Mono.empty());
         when(shortUrlService.generateShortUrl(ORIGINAL_URL)).thenReturn(SHORT_URL_CODE);
         when(shortUrlService.createShortUrl(any(ShortUrl.class))).thenAnswer(invocation -> {
             ShortUrl shortUrl = invocation.getArgument(0);
@@ -55,11 +59,15 @@ class ShortUrlControllerTest {
         });
 
         // Act
-        ResponseEntity<String> response = shortUrlController.createShortUrl(request);
+        Mono<ResponseEntity<String>> response = shortUrlController.createShortUrl(request);
 
         // Assert
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("Short URL creada: " + BASE_URL + SHORT_URL_CODE, response.getBody());
+        StepVerifier.create(response)
+            .assertNext(resp -> {
+                assertEquals(HttpStatus.OK, resp.getStatusCode());
+                assertEquals("Short URL creada: " + BASE_URL + SHORT_URL_CODE, resp.getBody());
+            })
+            .verifyComplete();
         
         verify(shortUrlService).getShortUrlByOriginalUrl(ORIGINAL_URL);
         verify(shortUrlService).generateShortUrl(ORIGINAL_URL);
@@ -76,14 +84,18 @@ class ShortUrlControllerTest {
         existingShortUrl.setOriginalUrl(ORIGINAL_URL);
         existingShortUrl.setShortUrl(SHORT_URL_CODE);
 
-        when(shortUrlService.getShortUrlByOriginalUrl(ORIGINAL_URL)).thenReturn(Optional.of(existingShortUrl));
+        when(shortUrlService.getShortUrlByOriginalUrl(ORIGINAL_URL)).thenReturn(Mono.just(existingShortUrl));
 
         // Act
-        ResponseEntity<String> response = shortUrlController.createShortUrl(request);
+        Mono<ResponseEntity<String>> response = shortUrlController.createShortUrl(request);
 
         // Assert
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("Short URL creada (existente): " + BASE_URL + SHORT_URL_CODE, response.getBody());
+        StepVerifier.create(response)
+            .assertNext(resp -> {
+                assertEquals(HttpStatus.OK, resp.getStatusCode());
+                assertEquals("Short URL creada (existente): " + BASE_URL + SHORT_URL_CODE, resp.getBody());
+            })
+            .verifyComplete();
         
         verify(shortUrlService).getShortUrlByOriginalUrl(ORIGINAL_URL);
         verify(shortUrlService, never()).generateShortUrl(anyString());
@@ -97,11 +109,15 @@ class ShortUrlControllerTest {
         request.setOriginalUrl(null);
 
         // Act
-        ResponseEntity<String> response = shortUrlController.createShortUrl(request);
+        Mono<ResponseEntity<String>> response = shortUrlController.createShortUrl(request);
 
         // Assert
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("No es posible acortar una url vacia", response.getBody());
+        StepVerifier.create(response)
+            .assertNext(resp -> {
+                assertEquals(HttpStatus.BAD_REQUEST, resp.getStatusCode());
+                assertEquals("No es posible acortar una url vacia", resp.getBody());
+            })
+            .verifyComplete();
         
         verify(shortUrlService, never()).getShortUrlByOriginalUrl(anyString());
         verify(shortUrlService, never()).generateShortUrl(anyString());
@@ -115,11 +131,15 @@ class ShortUrlControllerTest {
         request.setOriginalUrl("");
 
         // Act
-        ResponseEntity<String> response = shortUrlController.createShortUrl(request);
+        Mono<ResponseEntity<String>> response = shortUrlController.createShortUrl(request);
 
         // Assert
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("No es posible acortar una url vacia", response.getBody());
+        StepVerifier.create(response)
+            .assertNext(resp -> {
+                assertEquals(HttpStatus.BAD_REQUEST, resp.getStatusCode());
+                assertEquals("No es posible acortar una url vacia", resp.getBody());
+            })
+            .verifyComplete();
         
         verify(shortUrlService, never()).getShortUrlByOriginalUrl(anyString());
         verify(shortUrlService, never()).generateShortUrl(anyString());
@@ -133,11 +153,15 @@ class ShortUrlControllerTest {
         request.setOriginalUrl("   ");
 
         // Act
-        ResponseEntity<String> response = shortUrlController.createShortUrl(request);
+        Mono<ResponseEntity<String>> response = shortUrlController.createShortUrl(request);
 
         // Assert
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("No es posible acortar una url vacia", response.getBody());
+        StepVerifier.create(response)
+            .assertNext(resp -> {
+                assertEquals(HttpStatus.BAD_REQUEST, resp.getStatusCode());
+                assertEquals("No es posible acortar una url vacia", resp.getBody());
+            })
+            .verifyComplete();
         
         verify(shortUrlService, never()).getShortUrlByOriginalUrl(anyString());
         verify(shortUrlService, never()).generateShortUrl(anyString());
@@ -151,14 +175,18 @@ class ShortUrlControllerTest {
         shortUrl.setOriginalUrl(ORIGINAL_URL);
         shortUrl.setShortUrl(SHORT_URL_CODE);
 
-        when(shortUrlService.getShortUrl(SHORT_URL_CODE)).thenReturn(Optional.of(shortUrl));
+        when(shortUrlService.getShortUrl(SHORT_URL_CODE)).thenReturn(Mono.just(shortUrl));
 
         // Act
-        ResponseEntity<String> response = shortUrlController.getOriginal(SHORT_URL_CODE);
+        Mono<ResponseEntity<String>> response = shortUrlController.getOriginal(SHORT_URL_CODE);
 
         // Assert
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("Url original: " + ORIGINAL_URL, response.getBody());
+        StepVerifier.create(response)
+            .assertNext(resp -> {
+                assertEquals(HttpStatus.OK, resp.getStatusCode());
+                assertEquals("Url original: " + ORIGINAL_URL, resp.getBody());
+            })
+            .verifyComplete();
         
         verify(shortUrlService).getShortUrl(SHORT_URL_CODE);
     }
@@ -166,7 +194,7 @@ class ShortUrlControllerTest {
     @Test
     void getOriginal_WithNonExistentShortUrl_ShouldThrowException() {
         // Arrange
-        when(shortUrlService.getShortUrl(SHORT_URL_CODE)).thenReturn(Optional.empty());
+        when(shortUrlService.getShortUrl(SHORT_URL_CODE)).thenReturn(Mono.empty());
 
         // Act & Assert
         assertThrows(RuntimeException.class, () -> {
@@ -182,11 +210,15 @@ class ShortUrlControllerTest {
         doNothing().when(shortUrlService).deleteShortUrl(SHORT_URL_CODE);
 
         // Act
-        ResponseEntity<String> response = shortUrlController.deleteShortUrl(SHORT_URL_CODE);
+        Mono<ResponseEntity<String>> response = shortUrlController.deleteShortUrl(SHORT_URL_CODE);
 
         // Assert
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("Short URL eliminada", response.getBody());
+        StepVerifier.create(response)
+            .assertNext(resp -> {
+                assertEquals(HttpStatus.OK, resp.getStatusCode());
+                assertEquals("Short URL eliminada", resp.getBody());
+            })
+            .verifyComplete();
         
         verify(shortUrlService).deleteShortUrl(SHORT_URL_CODE);
     }
@@ -197,11 +229,15 @@ class ShortUrlControllerTest {
         doThrow(new RuntimeException("Database error")).when(shortUrlService).deleteShortUrl(SHORT_URL_CODE);
 
         // Act
-        ResponseEntity<String> response = shortUrlController.deleteShortUrl(SHORT_URL_CODE);
+        Mono<ResponseEntity<String>> response = shortUrlController.deleteShortUrl(SHORT_URL_CODE);
 
         // Assert
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("Error eliminando url", response.getBody());
+        StepVerifier.create(response)
+            .assertNext(resp -> {
+                assertEquals(HttpStatus.BAD_REQUEST, resp.getStatusCode());
+                assertEquals("Error eliminando url", resp.getBody());
+            })
+            .verifyComplete();
         
         verify(shortUrlService).deleteShortUrl(SHORT_URL_CODE);
     }
@@ -212,7 +248,7 @@ class ShortUrlControllerTest {
         UrlRequest request = new UrlRequest();
         request.setOriginalUrl(ORIGINAL_URL);
 
-        when(shortUrlService.getShortUrlByOriginalUrl(ORIGINAL_URL)).thenReturn(Optional.empty());
+        when(shortUrlService.getShortUrlByOriginalUrl(ORIGINAL_URL)).thenReturn(Mono.empty());
         when(shortUrlService.generateShortUrl(ORIGINAL_URL)).thenReturn(SHORT_URL_CODE);
         when(shortUrlService.createShortUrl(any(ShortUrl.class))).thenAnswer(invocation -> {
             ShortUrl shortUrl = invocation.getArgument(0);
@@ -239,7 +275,7 @@ class ShortUrlControllerTest {
         UrlRequest request = new UrlRequest();
         request.setOriginalUrl(urlWithSpecialChars);
 
-        when(shortUrlService.getShortUrlByOriginalUrl(urlWithSpecialChars)).thenReturn(Optional.empty());
+        when(shortUrlService.getShortUrlByOriginalUrl(urlWithSpecialChars)).thenReturn(Mono.empty());
         when(shortUrlService.generateShortUrl(urlWithSpecialChars)).thenReturn(SHORT_URL_CODE);
         when(shortUrlService.createShortUrl(any(ShortUrl.class))).thenAnswer(invocation -> {
             ShortUrl shortUrl = invocation.getArgument(0);
@@ -247,11 +283,15 @@ class ShortUrlControllerTest {
         });
 
         // Act
-        ResponseEntity<String> response = shortUrlController.createShortUrl(request);
+        Mono<ResponseEntity<String>> response = shortUrlController.createShortUrl(request);
 
         // Assert
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("Short URL creada: " + BASE_URL + SHORT_URL_CODE, response.getBody());
+        StepVerifier.create(response)
+            .assertNext(resp -> {
+                assertEquals(HttpStatus.OK, resp.getStatusCode());
+                assertEquals("Short URL creada: " + BASE_URL + SHORT_URL_CODE, resp.getBody());
+            })
+            .verifyComplete();
         
         verify(shortUrlService).getShortUrlByOriginalUrl(urlWithSpecialChars);
         verify(shortUrlService).generateShortUrl(urlWithSpecialChars);
@@ -264,7 +304,7 @@ class ShortUrlControllerTest {
         UrlRequest request = new UrlRequest();
         request.setOriginalUrl(longUrl);
 
-        when(shortUrlService.getShortUrlByOriginalUrl(longUrl)).thenReturn(Optional.empty());
+        when(shortUrlService.getShortUrlByOriginalUrl(longUrl)).thenReturn(Mono.empty());
         when(shortUrlService.generateShortUrl(longUrl)).thenReturn(SHORT_URL_CODE);
         when(shortUrlService.createShortUrl(any(ShortUrl.class))).thenAnswer(invocation -> {
             ShortUrl shortUrl = invocation.getArgument(0);
@@ -272,11 +312,15 @@ class ShortUrlControllerTest {
         });
 
         // Act
-        ResponseEntity<String> response = shortUrlController.createShortUrl(request);
+        Mono<ResponseEntity<String>> response = shortUrlController.createShortUrl(request);
 
         // Assert
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("Short URL creada: " + BASE_URL + SHORT_URL_CODE, response.getBody());
+        StepVerifier.create(response)
+            .assertNext(resp -> {
+                assertEquals(HttpStatus.OK, resp.getStatusCode());
+                assertEquals("Short URL creada: " + BASE_URL + SHORT_URL_CODE, resp.getBody());
+            })
+            .verifyComplete();
         
         verify(shortUrlService).getShortUrlByOriginalUrl(longUrl);
         verify(shortUrlService).generateShortUrl(longUrl);

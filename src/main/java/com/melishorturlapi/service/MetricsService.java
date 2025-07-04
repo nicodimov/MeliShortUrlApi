@@ -12,7 +12,7 @@ public class MetricsService {
     private MeterRegistry meterRegistry;
 
     public void incrementEndpointHit(String endpointName, String serviceName) {
-        Counter counter = meterRegistry.counter("shorturl.endpoint.hits", "endpoint", serviceName, endpointName);
+        Counter counter = meterRegistry.counter("shorturl.endpoint.hits", serviceName, endpointName);
         counter.increment();
     }
 }

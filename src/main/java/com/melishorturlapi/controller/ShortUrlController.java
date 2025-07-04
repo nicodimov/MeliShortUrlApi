@@ -13,6 +13,8 @@ import com.melishorturlapi.model.UrlRequest;
 import com.melishorturlapi.service.MetricsService;
 import com.melishorturlapi.service.ShortUrlService;
 
+import reactor.core.publisher.Mono;
+
 @RestController
 @RequestMapping("/api/v1/shorturl")
 public class ShortUrlController {
@@ -27,42 +29,44 @@ public class ShortUrlController {
     private MetricsService metricsService;
 
     @PostMapping
-    public ResponseEntity<String> createShortUrl(@RequestBody UrlRequest request) {
+    public Mono<ResponseEntity<String>> createShortUrl(@RequestBody UrlRequest request) {
         metricsService.incrementEndpointHit("createShortUrl", "urlService");
         String originalUrl = request.getOriginalUrl();
         
         if (originalUrl == null || originalUrl.isEmpty()) {
-            return ResponseEntity.badRequest().body("No es posible acortar una url vacia");
+            return Mono.just(ResponseEntity.badRequest().body("No es posible acortar una url vacia"));
         }
-        Optional<ShortUrl> url = shortUrlService.getShortUrlByOriginalUrl(originalUrl);
-        if (url.isPresent()) {
-            return ResponseEntity.ok("Short URL creada (existente): " + appConfig.getBaseShortUrl() + url.get().getShortUrl());
-        }
-        ShortUrl newShortUrl = new ShortUrl();
-        newShortUrl.setOriginalUrl(originalUrl);
-        newShortUrl.setShortUrl(shortUrlService.generateShortUrl(originalUrl));
-        newShortUrl.setCreatedAt(DateTime.now().getMillis());
-        newShortUrl.setRedirectCount(0L);
-        shortUrlService.createShortUrl(newShortUrl);
-        return ResponseEntity.ok("Short URL creada: "+ appConfig.getBaseShortUrl() + newShortUrl.getShortUrl());
+        return shortUrlService.getShortUrlByOriginalUrl(originalUrl)
+            .flatMap(url -> Mono.just(ResponseEntity.ok("Short URL creada (existente): " + appConfig.getBaseShortUrl() + url.getShortUrl())))
+            .switchIfEmpty(
+                Mono.defer(() -> {
+                    ShortUrl newShortUrl = new ShortUrl();
+                    newShortUrl.setOriginalUrl(originalUrl);
+                    newShortUrl.setShortUrl(shortUrlService.generateShortUrl(originalUrl));
+                    newShortUrl.setCreatedAt(DateTime.now().getMillis());
+                    newShortUrl.setRedirectCount(0L);
+                    return shortUrlService.createShortUrl(newShortUrl)
+                        .map(saved -> ResponseEntity.ok("Short URL creada: " + appConfig.getBaseShortUrl() + saved.getShortUrl()));
+                })
+            );
     }
 
     @GetMapping("/view/{shortUrl}")
-    public ResponseEntity<String> getOriginal(@PathVariable String shortUrl) {
+    public Mono<ResponseEntity<String>> getOriginal(@PathVariable String shortUrl) {
         metricsService.incrementEndpointHit("getOriginal", "urlService");
-        ShortUrl target = shortUrlService.getShortUrl(shortUrl).get();
-        return ResponseEntity.ok("Url original: " + target.getOriginalUrl());
+        return shortUrlService.getShortUrl(shortUrl)
+            .map(t -> ResponseEntity.ok("Url original: " + t.getOriginalUrl()));
     }
 
     // Delete a short URL
     @DeleteMapping("/{shortUrl}")
-    public ResponseEntity<String> deleteShortUrl(@PathVariable String shortUrl) {
+    public Mono<ResponseEntity<String>> deleteShortUrl(@PathVariable String shortUrl) {
         metricsService.incrementEndpointHit("deleteShortUrl", "urlService");
         try {
         shortUrlService.deleteShortUrl(shortUrl);
-        return ResponseEntity.ok("Short URL eliminada");
+        return Mono.just(ResponseEntity.ok("Short URL eliminada"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error eliminando url");
+            return Mono.just(ResponseEntity.badRequest().body("Error eliminando url"));
         }
     }
 }

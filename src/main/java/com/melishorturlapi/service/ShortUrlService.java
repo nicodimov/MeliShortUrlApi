@@ -2,6 +2,10 @@ package com.melishorturlapi.service;
 
 import com.melishorturlapi.model.ShortUrl;
 import com.melishorturlapi.repository.ShortUrlRepository;
+
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -31,35 +35,38 @@ public class ShortUrlService {
     @Autowired
     private UrlHashService urlHashService;
 
-    public ShortUrl createShortUrl(ShortUrl shortUrl) {
-        ShortUrl result = shortUrlRepository.save(shortUrl);
-        evictFromBothCaches(SHORT_URL_CACHE, shortUrl.getShortUrl());
-        evictFromBothCaches(ORIGINAL_URL_CACHE, shortUrl.getOriginalUrl());
-        return result;
+    public Mono<ShortUrl> createShortUrl(ShortUrl shortUrl) {
+        return Mono.fromCallable(() -> {
+            ShortUrl result = shortUrlRepository.save(shortUrl);
+            evictFromBothCaches(SHORT_URL_CACHE, shortUrl.getShortUrl());
+            evictFromBothCaches(ORIGINAL_URL_CACHE, shortUrl.getOriginalUrl());
+            return result;
+        }).subscribeOn(Schedulers.boundedElastic());
     }
 
-    public Optional<ShortUrl> getShortUrl(String shortUrl) {
+    public Mono<ShortUrl> getShortUrl(String shortUrl) {
         return getCachedOrFetch(SHORT_URL_CACHE, shortUrl, 
-            () -> shortUrlRepository.findByShortUrl(shortUrl));
+            () -> Mono.fromCallable(() -> shortUrlRepository.findByShortUrl(shortUrl)).subscribeOn(Schedulers.boundedElastic()));
     }
 
-    public Optional<ShortUrl> getShortUrlByOriginalUrl(String originalUrl) {
+    public Mono<ShortUrl> getShortUrlByOriginalUrl(String originalUrl) {
         return getCachedOrFetch(ORIGINAL_URL_CACHE, originalUrl, 
-            () -> shortUrlRepository.findByOriginalUrl(originalUrl));
+            () -> Mono.fromCallable(() -> shortUrlRepository.findByOriginalUrl(originalUrl)).subscribeOn(Schedulers.boundedElastic()));
     }
 
-    public void deleteShortUrl(String shortUrl) {
-        ShortUrl url = shortUrlRepository.findByShortUrl(shortUrl);
-        shortUrlRepository.deleteById(shortUrl);
-        
-        evictFromBothCaches(SHORT_URL_CACHE, shortUrl);
-        if (url != null) {
-            evictFromBothCaches(ORIGINAL_URL_CACHE, url.getOriginalUrl());
-        }
+    public Mono<Void> deleteShortUrl(String shortUrl) {
+        return Mono.fromRunnable(() -> {
+            ShortUrl url = shortUrlRepository.findByShortUrl(shortUrl);
+            shortUrlRepository.deleteById(shortUrl);
+            evictFromBothCaches(SHORT_URL_CACHE, shortUrl);
+            if (url != null) {
+                evictFromBothCaches(ORIGINAL_URL_CACHE, url.getOriginalUrl());
+            }
+        }).subscribeOn(Schedulers.boundedElastic()).then();
     }
 
-    public Optional<ShortUrl> getShortUrlStats(String shortUrl) {
-        return shortUrlRepository.findById(shortUrl);
+    public Mono<ShortUrl> getShortUrlStats(String shortUrl) {
+        return Mono.fromCallable(() -> shortUrlRepository.findById(shortUrl).orElse(null)).subscribeOn(Schedulers.boundedElastic());
     }
 
     public String generateShortUrl(String originalUrl) {
@@ -72,12 +79,11 @@ public class ShortUrlService {
         return code;
     }
 
-    private Optional<ShortUrl> getCachedOrFetch(String cacheName, String key, 
-                                                Supplier<ShortUrl> fetcher) {
+    private Mono<ShortUrl> getCachedOrFetch(String cacheName, String key, java.util.function.Supplier<Mono<ShortUrl>> fetcher) {
         // Try Caffeine cache first (L1)
         ShortUrl cached = getFromCache(caffeineCacheManager, cacheName, key);
         if (cached != null) {
-            return Optional.of(cached);
+            return Mono.just(cached);
         }
 
         // Try Redis cache (L2)
@@ -85,19 +91,16 @@ public class ShortUrlService {
         if (cached != null) {
             // Populate L1 cache for next time
             putInCache(caffeineCacheManager, cacheName, key, cached);
-            return Optional.of(cached);
+            return Mono.just(cached);
         }
 
-        // Fetch from database
-        ShortUrl dbResult = fetcher.get();
-        if (dbResult != null) {
-            // Populate both caches
-            putInCache(redisCacheManager, cacheName, key, dbResult);
-            putInCache(caffeineCacheManager, cacheName, key, dbResult);
-            return Optional.of(dbResult);
-        }
-
-        return Optional.empty();
+        // Fetch from database reactively
+        return fetcher.get()
+            .doOnNext(dbResult -> {
+                // Populate both caches
+                putInCache(redisCacheManager, cacheName, key, dbResult);
+                putInCache(caffeineCacheManager, cacheName, key, dbResult);
+            });
     }
 
     private void evictFromBothCaches(String cacheName, String key) {
