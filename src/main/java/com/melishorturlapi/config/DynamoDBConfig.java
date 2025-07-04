@@ -12,6 +12,8 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.model.*;
 import javax.annotation.PostConstruct;
+
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 
 @Configuration
@@ -36,7 +38,7 @@ public class DynamoDBConfig {
         return AmazonDynamoDBClientBuilder.standard()
             .withEndpointConfiguration(
                 new AwsClientBuilder.EndpointConfiguration(amazonDynamoDBEndpoint, amazonAWSRegion))
-            // .withCredentials(new AWSStaticCredentialsProvider(awsCreds))
+            .withCredentials(new AWSStaticCredentialsProvider(awsCreds))
             .build();
     }
 

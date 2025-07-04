@@ -12,9 +12,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 
-import java.util.Optional;
-import java.util.function.Supplier;
-
 @Service
 public class ShortUrlService {
 

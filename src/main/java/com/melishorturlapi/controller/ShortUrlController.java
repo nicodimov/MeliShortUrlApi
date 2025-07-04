@@ -1,7 +1,5 @@
 package com.melishorturlapi.controller;
 
-import java.util.Optional;
-
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

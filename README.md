@@ -45,6 +45,11 @@ brew services start redis
 brew services info redis
 ```
 
+### Start Grafana
+```
+docker run -d -p 3000:3000 grafana/grafana
+```
+
 ### Prerequisites
 - Java 11 or higher
 - Maven

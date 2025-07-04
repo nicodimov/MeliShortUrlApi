@@ -28,6 +28,12 @@ public class CacheConfig {
     @Value("${cache.redis.ttl}")
     private int refdisTtl;
 
+    @Value("${spring.redis.host}")
+    private String redisHost;
+
+    @Value("${spring.redis.port}")
+    private int redisPort;
+
     @Bean
     public Caffeine<Object, Object> caffeineConfig() {
         return Caffeine.newBuilder()
@@ -45,7 +51,7 @@ public class CacheConfig {
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
-        return new LettuceConnectionFactory();
+        return new LettuceConnectionFactory(redisHost, redisPort);
     }
 
     @Bean
