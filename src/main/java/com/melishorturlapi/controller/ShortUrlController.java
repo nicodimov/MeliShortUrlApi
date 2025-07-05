@@ -44,7 +44,10 @@ public class ShortUrlController {
                     newShortUrl.setCreatedAt(DateTime.now().getMillis());
                     newShortUrl.setRedirectCount(0L);
                     return shortUrlService.createShortUrl(newShortUrl)
-                        .map(saved -> ResponseEntity.ok("Short URL creada: " + appConfig.getBaseShortUrl() + saved.getShortUrl()));
+                        .map(saved -> {
+                            metricsService.incrementShortUrlCreated();
+                            return ResponseEntity.ok("Short URL creada: " + appConfig.getBaseShortUrl() + saved.getShortUrl());
+                        });
                 })
             );
     }

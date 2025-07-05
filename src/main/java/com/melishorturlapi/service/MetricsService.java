@@ -15,4 +15,14 @@ public class MetricsService {
         Counter counter = meterRegistry.counter("shorturl.endpoint.hits", serviceName, endpointName);
         counter.increment();
     }
+
+    public void incrementUrlCall(String shortUrl) {
+        Counter counter = meterRegistry.counter("shorturl.redirect", "redirect", shortUrl);
+        counter.increment();
+    }
+
+    public void incrementShortUrlCreated() {
+        Counter counter = meterRegistry.counter("shorturl.total_created");
+        counter.increment();
+    }
 }

@@ -8,10 +8,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.melishorturlapi.service.MetricsService;
 import com.melishorturlapi.service.ShortUrlService;
 
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.MeterRegistry;
 import reactor.core.publisher.Mono;
 
 @RestController
@@ -19,16 +18,18 @@ import reactor.core.publisher.Mono;
 public class ShortUrlRedirectController {
 
     @Autowired
-    private MeterRegistry meterRegistry;
+    private MetricsService metricsService;
 
     @Autowired
     private ShortUrlService shortUrlService;
         // Redirect to the original URL
     @GetMapping("/{shortUrl}")
     public Mono<ResponseEntity<Void>> redirectToOriginal(@PathVariable String shortUrl) {
-        Counter counter = meterRegistry.counter("shorturl.endpoint.hits", "endpoint", "redirectToOriginal");
-        counter.increment();
+        metricsService.incrementEndpointHit("redirectToOriginal", "shortUrlService");
         return shortUrlService.getShortUrl(shortUrl)
-        .map(url -> ResponseEntity.status(HttpStatus.FOUND).header("Location", url.getOriginalUrl()).build());
+        .map(url -> {
+            metricsService.incrementUrlCall(url.getShortUrl());
+            return ResponseEntity.status(HttpStatus.FOUND).header("Location", url.getOriginalUrl()).build();
+        });
     }
 }
