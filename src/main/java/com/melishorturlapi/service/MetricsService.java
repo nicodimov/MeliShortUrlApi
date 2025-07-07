@@ -1,28 +1,43 @@
 package com.melishorturlapi.service;
 
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.MeterRegistry;
-import org.springframework.beans.factory.annotation.Autowired;
+import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.opentelemetry.api.metrics.LongCounter;
+import io.opentelemetry.api.metrics.Meter;
+import io.opentelemetry.api.common.AttributeKey;
+import io.opentelemetry.api.common.Attributes;
 import org.springframework.stereotype.Service;
 
 @Service
 public class MetricsService {
 
-    @Autowired
-    private MeterRegistry meterRegistry;
+    private final Meter meter = GlobalOpenTelemetry.getMeter("com.melishorturlapi");
+    private final LongCounter redirectCounter = meter.counterBuilder("shorturl_redirect")
+        .setDescription("Number of redirects per shortUrl")
+        .setUnit("1")
+        .build();
 
-    public void incrementEndpointHit(String endpointName, String serviceName) {
-        Counter counter = meterRegistry.counter("shorturl.endpoint.hits", serviceName, endpointName);
-        counter.increment();
-    }
+    private final LongCounter endpointHitCounter = meter.counterBuilder("shorturl_endpoint")
+        .setDescription("Endpoint Hit Counter")
+        .setUnit("1")
+        .build();
+
+    private final LongCounter createShorturlCounter = meter.counterBuilder("shorturl_create")
+        .setDescription("Create new short Url Counter")
+        .setUnit("1")
+        .build();
 
     public void incrementUrlCall(String shortUrl) {
-        Counter counter = meterRegistry.counter("shorturl.redirect", "redirect", shortUrl);
-        counter.increment();
+        redirectCounter.add(1, Attributes.of(AttributeKey.stringKey("shortUrl"), shortUrl));
+    }
+
+    public void incrementEndpointHit(String service, String endpointName) {
+        endpointHitCounter.add(1, Attributes.of(
+            AttributeKey.stringKey("service"), service,
+            AttributeKey.stringKey("endpoint"), endpointName
+        ));
     }
 
     public void incrementShortUrlCreated() {
-        Counter counter = meterRegistry.counter("shorturl.total_created");
-        counter.increment();
+        createShorturlCounter.add(1, Attributes.of(AttributeKey.stringKey("event"), "shorturl_created"));
     }
 }

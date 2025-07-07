@@ -54,7 +54,7 @@ public class ShortUrlController {
 
     @GetMapping("/view/{shortUrl}")
     public Mono<ResponseEntity<String>> getOriginal(@PathVariable String shortUrl) {
-        metricsService.incrementEndpointHit("getOriginal", "urlService");
+        metricsService.incrementEndpointHit("urlService", "getOriginal");
         return shortUrlService.getShortUrl(shortUrl)
             .map(t -> ResponseEntity.ok("Url original: " + t.getOriginalUrl()));
     }
@@ -62,7 +62,7 @@ public class ShortUrlController {
     // Delete a short URL
     @DeleteMapping("/{shortUrl}")
     public Mono<ResponseEntity<String>> deleteShortUrl(@PathVariable String shortUrl) {
-        metricsService.incrementEndpointHit("deleteShortUrl", "urlService");
+        metricsService.incrementEndpointHit("urlService", "deleteShortUrl");
         try {
         shortUrlService.deleteShortUrl(shortUrl);
         return Mono.just(ResponseEntity.ok("Short URL eliminada"));

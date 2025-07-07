@@ -8,27 +8,46 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
-    depends_on:
-      - app
+    # depends_on:
+    #   - app
 
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
     ports:
       - "33000:3000"
-    depends_on:
-      - prometheus
+    # depends_on:
+    #   - prometheus
 
   app:
     build: .
     container_name: melishorturlapi
     ports:
       - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
 
   redis:
     image: redis:7
     container_name: redis
     ports:
       - "6379:6379"
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "8889:8889"   # Prometheus metrics exporter
+      - "4318:4318"   # OTLP HTTP receiver
+
+  # Optionally add Jaeger or Tempo for traces
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"
+      - "14250:14250"
 
 # Note: You must provide a prometheus.yml file in the same directory as this docker-compose.yml 

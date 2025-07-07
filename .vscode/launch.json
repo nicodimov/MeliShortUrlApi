@@ -16,7 +16,8 @@
             "name": "MeliShortUrlApiApplication",
             "request": "launch",
             "mainClass": "com.melishorturlapi.MeliShortUrlApiApplication",
-            "projectName": "MeliShortUrlApi"
+            "projectName": "MeliShortUrlApi",
+            "vmArgs": "-javaagent:${workspaceFolder}/opentelemetry-javaagent.jar -Dotel.exporter.otlp.protocol=grpc -Dotel.exporter.otlp.endpoint=http://localhost:4317 -Dotel.logs.exporter=none"
         }
     ]
 }
