@@ -27,9 +27,10 @@ public class ShortUrlRedirectController {
     public Mono<ResponseEntity<Void>> redirectToOriginal(@PathVariable String shortUrl) {
         metricsService.incrementEndpointHit("redirectToOriginal", "shortUrlService");
         return shortUrlService.getShortUrl(shortUrl)
-        .map(url -> {
-            metricsService.incrementUrlCall(url.getShortUrl());
-            return ResponseEntity.status(HttpStatus.FOUND).header("Location", url.getOriginalUrl()).build();
-        });
+            .doOnNext(url -> metricsService.incrementUrlCall(url.getShortUrl()))
+            .map(url -> ResponseEntity.status(HttpStatus.FOUND)
+                                        .header("Location", url.getOriginalUrl())
+                                        .<Void>build())
+            .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).<Void>build()));
     }
 }
