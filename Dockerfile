@@ -14,4 +14,4 @@ COPY opentelemetry-javaagent.jar opentelemetry-javaagent.jar
 EXPOSE 8080
 
 # Use the agent in your ENTRYPOINT
-ENTRYPOINT ["java", "-javaagent:/app/opentelemetry-javaagent.jar", "-Dotel.exporter.otlp.protocol=grpc", "-Dotel.exporter.otlp.endpoint=http://otel-collector:4317", "-Dotel.metrics.exporter=otlp", "-Dotel.traces.exporter=otlp", "-Dotel.logs.exporter=none", "-jar", "app.jar", "--spring.profiles.active=docker"] 
+ENTRYPOINT ["java", "-javaagent:/app/opentelemetry-javaagent.jar", "-Dotel.exporter.otlp.protocol=grpc", "-Dotel.exporter.otlp.endpoint=http://otel-collector:4317", "-Dotel.metrics.exporter=otlp", "-Dotel.traces.exporter=otlp", "-Dotel.logs.exporter=otlp", "-jar", "app.jar", "--spring.profiles.active=docker"] 

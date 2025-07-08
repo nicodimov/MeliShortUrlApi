@@ -10,6 +10,9 @@ processors:
   batch:
 
 exporters:
+  zipkin:
+    endpoint: http://jaeger:9411/api/v2/spans
+    format: proto
   prometheus:
     endpoint: "0.0.0.0:8889"
     namespace: "shorturl"
@@ -18,6 +21,8 @@ exporters:
     enable_open_metrics: true
   debug:
     verbosity: detailed
+  loki:
+    endpoint: http://loki:3100/loki/api/v1/push
 
 service:
   pipelines:
@@ -28,4 +33,8 @@ service:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [debug]  # or jaeger, zipkin, etc. if you want to export traces 
+      exporters: [zipkin, debug]  # Changed from jaeger to otlp
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [loki, debug]

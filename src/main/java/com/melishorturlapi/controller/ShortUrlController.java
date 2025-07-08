@@ -2,6 +2,7 @@ package com.melishorturlapi.controller;
 
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -56,7 +57,8 @@ public class ShortUrlController {
     public Mono<ResponseEntity<String>> getOriginal(@PathVariable String shortUrl) {
         metricsService.incrementEndpointHit("urlService", "getOriginal");
         return shortUrlService.getShortUrl(shortUrl)
-            .map(t -> ResponseEntity.ok("Url original: " + t.getOriginalUrl()));
+            .map(t -> ResponseEntity.ok("Url original: " + t.getOriginalUrl()))
+            .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).body("El codigo no corresponde a una url acortada")));
     }
 
     // Delete a short URL

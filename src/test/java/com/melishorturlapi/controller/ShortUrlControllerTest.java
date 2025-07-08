@@ -3,6 +3,7 @@ package com.melishorturlapi.controller;
 import com.melishorturlapi.config.AppConfig;
 import com.melishorturlapi.model.ShortUrl;
 import com.melishorturlapi.model.UrlRequest;
+import com.melishorturlapi.service.MetricsService;
 import com.melishorturlapi.service.ShortUrlService;
 
 import reactor.core.publisher.Mono;
@@ -30,6 +31,9 @@ class ShortUrlControllerTest {
 
     @Mock
     private AppConfig appConfig;
+
+    @Mock
+    private MetricsService metricsService;
 
     @InjectMocks
     private ShortUrlController shortUrlController;
