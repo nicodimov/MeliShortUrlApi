@@ -13,10 +13,13 @@ import com.melishorturlapi.service.MetricsService;
 import com.melishorturlapi.service.ShortUrlService;
 
 import reactor.core.publisher.Mono;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/v1/shorturl")
 public class ShortUrlController {
+    private Logger logger = LoggerFactory.getLogger(ShortUrlController.class);
 
     @Autowired
     private ShortUrlService shortUrlService;
@@ -55,10 +58,17 @@ public class ShortUrlController {
 
     @GetMapping("/view/{shortUrl}")
     public Mono<ResponseEntity<String>> getOriginal(@PathVariable String shortUrl) {
+        logger.info("[getOriginal] Received request for shortUrl: {}", shortUrl);
         metricsService.incrementEndpointHit("urlService", "getOriginal");
         return shortUrlService.getShortUrl(shortUrl)
-            .map(t -> ResponseEntity.ok("Url original: " + t.getOriginalUrl()))
-            .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).body("El codigo no corresponde a una url acortada")));
+            .map(t -> {
+                logger.info("[getOriginal] Found shortUrl: {} -> original: {}", shortUrl, t.getOriginalUrl());
+                return ResponseEntity.ok("Url original: " + t.getOriginalUrl());
+            })
+            .switchIfEmpty(Mono.fromCallable(() -> {
+                logger.warn("[getOriginal] shortUrl not found: {}", shortUrl);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("El codigo no corresponde a una url acortada");
+            }));
     }
 
     // Delete a short URL

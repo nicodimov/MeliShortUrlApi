@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class ShortUrlService {
@@ -32,6 +34,8 @@ public class ShortUrlService {
     @Autowired
     private UrlHashService urlHashService;
 
+    private static final Logger logger = LoggerFactory.getLogger(ShortUrlService.class);
+
     public Mono<ShortUrl> createShortUrl(ShortUrl shortUrl) {
         return Mono.fromCallable(() -> {
             ShortUrl result = shortUrlRepository.save(shortUrl);
@@ -42,6 +46,7 @@ public class ShortUrlService {
     }
 
     public Mono<ShortUrl> getShortUrl(String shortUrl) {
+        logger.info("[getShortUrl] Called with shortUrl: {}", shortUrl);
         return getCachedOrFetch(SHORT_URL_CACHE, shortUrl, 
             () -> Mono.fromCallable(() -> shortUrlRepository.findByShortUrl(shortUrl)).subscribeOn(Schedulers.boundedElastic()));
     }
@@ -80,20 +85,24 @@ public class ShortUrlService {
         // Try Caffeine cache first (L1)
         ShortUrl cached = getFromCache(caffeineCacheManager, cacheName, key);
         if (cached != null) {
+            logger.info("[getCachedOrFetch] L1 cache hit for key: {} in cache: {}", key, cacheName);
             return Mono.just(cached);
         }
 
         // Try Redis cache (L2)
         cached = getFromCache(redisCacheManager, cacheName, key);
         if (cached != null) {
+            logger.info("[getCachedOrFetch] L2 cache hit for key: {} in cache: {}", key, cacheName);
             // Populate L1 cache for next time
             putInCache(caffeineCacheManager, cacheName, key, cached);
             return Mono.just(cached);
         }
 
+        logger.info("[getCachedOrFetch] Cache miss for key: {} in cache: {}. Fetching from DB...", key, cacheName);
         // Fetch from database reactively
         return fetcher.get()
             .doOnNext(dbResult -> {
+                logger.info("[getCachedOrFetch] DB fetch result for key: {} in cache: {}: {}", key, cacheName, dbResult != null ? "FOUND" : "NOT FOUND");
                 // Populate both caches
                 putInCache(redisCacheManager, cacheName, key, dbResult);
                 putInCache(caffeineCacheManager, cacheName, key, dbResult);
