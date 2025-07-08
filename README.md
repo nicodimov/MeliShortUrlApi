@@ -69,6 +69,13 @@ docker run -d -p 3000:3000 grafana/grafana
    ```
 
 ### Running the Application
+
+## Running locally 
+Start services
+```
+docker-compose up otel-collector prometheus grafana jaeger loki
+```
+
 To run the application, use the following command:
 ```
 mvn spring-boot:run
@@ -79,9 +86,16 @@ mvn spring-boot:run
 mvn spring-boot:run -Dspring-boot.run.jvmArguments="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
 ```
 
+## Run dockerized
+All services will run in docker context
+```
+docker-compose up --build 
+```
+
 ### API Endpoints
 - **POST /urls**: Create a short URL
 - **GET /urls/{shortUrl}**: Retrieve the original URL
+- **GET /{shortUrl}**: Navigate to a short URL (redirect to original URL)
 
 ## Contributing
 Contributions are welcome! Please open an issue or submit a pull request for any enhancements or bug fixes.
