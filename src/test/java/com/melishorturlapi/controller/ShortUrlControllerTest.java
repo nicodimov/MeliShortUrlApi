@@ -159,6 +159,25 @@ class ShortUrlControllerTest {
     }
 
     @Test
+    void createShortUrl_WithMalformedUrl_ShouldReturnBadRequest() {
+        UrlRequest request = new UrlRequest();
+        request.setOriginalUrl("ht!tp://bad_url");
+
+        Mono<ResponseEntity<String>> response = shortUrlController.createShortUrl(request);
+
+        StepVerifier.create(response)
+            .assertNext(resp -> {
+                assertEquals(HttpStatus.BAD_REQUEST, resp.getStatusCode());
+                assertEquals("Formato de URL invalido", resp.getBody());
+            })
+            .verifyComplete();
+
+        verify(shortUrlService, never()).getShortUrlByOriginalUrl(anyString());
+        verify(shortUrlService, never()).generateShortUrl(anyString());
+        verify(shortUrlService, never()).createShortUrl(any(ShortUrl.class));
+    }
+
+    @Test
     void getOriginal_WithValidShortUrl_ShouldReturnOriginalUrl() {
         ShortUrl shortUrl = new ShortUrl();
         shortUrl.setOriginalUrl(ORIGINAL_URL);

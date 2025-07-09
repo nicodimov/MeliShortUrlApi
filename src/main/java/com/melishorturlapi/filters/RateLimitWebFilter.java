@@ -5,12 +5,14 @@ import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Refill;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 
+import javax.annotation.PostConstruct;
 import java.time.Duration;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -19,12 +21,26 @@ public class RateLimitWebFilter implements WebFilter {
     private static final Logger logger = LoggerFactory.getLogger(RateLimitWebFilter.class);
     private final ConcurrentHashMap<String, Bucket> buckets = new ConcurrentHashMap<>();
 
+    @Value("${rate.limit.enabled:true}")
+    private boolean rateLimitEnabled;
+
     public RateLimitWebFilter() {
         logger.info("[RateLimit] RateLimitWebFilter constructor called - filter is being instantiated");
     }
 
+    @PostConstruct
+    public void init() {
+        logger.info("[RateLimit] Rate limiting is enabled: {}", rateLimitEnabled);
+    }
+
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+        // If rate limiting is disabled, just continue with the chain
+        if (!rateLimitEnabled) {
+            logger.debug("[RateLimit] Rate limiting is disabled, allowing request");
+            return chain.filter(exchange);
+        }
+
         String clientIp = exchange.getRequest().getRemoteAddress() != null ? 
             exchange.getRequest().getRemoteAddress().getAddress().getHostAddress() : "unknown";
         

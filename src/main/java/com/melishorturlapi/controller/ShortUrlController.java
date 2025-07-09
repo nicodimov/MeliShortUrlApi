@@ -16,6 +16,11 @@ import reactor.core.publisher.Mono;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+
 @RestController
 @RequestMapping("/api/v1/shorturl")
 public class ShortUrlController {
@@ -37,6 +42,13 @@ public class ShortUrlController {
         
         if (originalUrl == null || originalUrl.trim() == null || originalUrl.trim().isEmpty()) {
             return Mono.just(ResponseEntity.badRequest().body("No es posible acortar una url vacia"));
+        }
+        // Validate URL format
+        try {
+            URI uri = new URI(originalUrl);
+            uri.toURL();
+        } catch (URISyntaxException | MalformedURLException | IllegalArgumentException e) {
+            return Mono.just(ResponseEntity.badRequest().body("Formato de URL invalido"));
         }
         return shortUrlService.getShortUrlByOriginalUrl(originalUrl)
             .flatMap(url -> Mono.just(ResponseEntity.ok("Short URL creada (existente): " + appConfig.getBaseShortUrl() + url.getShortUrl())))

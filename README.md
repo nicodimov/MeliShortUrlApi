@@ -97,6 +97,11 @@ docker-compose up --build
 - **GET /urls/{shortUrl}**: Retrieve the original URL
 - **GET /{shortUrl}**: Navigate to a short URL (redirect to original URL)
 
+### Load test 
+- k6 run loadtest-advanced.js
+- k6 run loadtest-create-view.js
+
+
 ## Contributing
 Contributions are welcome! Please open an issue or submit a pull request for any enhancements or bug fixes.
 
