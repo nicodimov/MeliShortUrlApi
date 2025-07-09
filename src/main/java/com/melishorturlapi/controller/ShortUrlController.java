@@ -39,7 +39,7 @@ public class ShortUrlController {
     public Mono<ResponseEntity<String>> createShortUrl(@RequestBody UrlRequest request) {
         Span span = Span.current();
         span.setAttribute("request.originalUrl", request.getOriginalUrl());
-        metricsService.incrementEndpointHit("createShortUrl", "urlService");
+        metricsService.incrementEndpointHit("urlService", "createShortUrl");
         String originalUrl = request.getOriginalUrl();
         
         if (originalUrl == null || originalUrl.trim() == null || originalUrl.trim().isEmpty()) {
@@ -75,7 +75,7 @@ public class ShortUrlController {
         Span span = Span.current();
         span.setAttribute("request.shortUrl", shortUrl);
         logger.info("[getOriginal] Received request for shortUrl: {}", shortUrl);
-        metricsService.incrementEndpointHit("urlService", "getOriginal");
+        metricsService.incrementViewUrl(shortUrl);
         return shortUrlService.getShortUrl(shortUrl)
             .map(t -> {
                 logger.info("[getOriginal] Found shortUrl: {} -> original: {}", shortUrl, t.getOriginalUrl());

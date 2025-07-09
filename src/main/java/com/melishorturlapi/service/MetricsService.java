@@ -16,6 +16,11 @@ public class MetricsService {
         .setUnit("1")
         .build();
 
+    private final LongCounter viweCounter = meter.counterBuilder("shorturl_view")
+        .setDescription("Number of views per shortUrl")
+        .setUnit("1")
+        .build();
+
     private final LongCounter endpointHitCounter = meter.counterBuilder("shorturl_endpoint")
         .setDescription("Endpoint Hit Counter")
         .setUnit("1")
@@ -26,7 +31,7 @@ public class MetricsService {
         .setUnit("1")
         .build();
 
-    public void incrementUrlCall(String shortUrl) {
+    public void incrementRedirectCalls(String shortUrl) {
         redirectCounter.add(1, Attributes.of(AttributeKey.stringKey("shortUrl"), shortUrl));
     }
 
@@ -35,6 +40,10 @@ public class MetricsService {
             AttributeKey.stringKey("service"), service,
             AttributeKey.stringKey("endpoint"), endpointName
         ));
+    }
+
+    public void incrementViewUrl(String shortUrl) {
+        viweCounter.add(1, Attributes.of(AttributeKey.stringKey("shortUrl"), shortUrl));
     }
 
     public void incrementShortUrlCreated() {

@@ -27,7 +27,7 @@ public class ShortUrlRedirectController {
     public Mono<ResponseEntity<Void>> redirectToOriginal(@PathVariable String shortUrl) {
         metricsService.incrementEndpointHit("redirectToOriginal", "shortUrlService");
         return shortUrlService.getShortUrl(shortUrl)
-            .doOnNext(url -> metricsService.incrementUrlCall(url.getShortUrl()))
+            .doOnNext(url -> metricsService.incrementRedirectCalls(url.getShortUrl()))
             .map(url -> ResponseEntity.status(HttpStatus.FOUND)
                                         .header("Location", url.getOriginalUrl())
                                         .<Void>build())
