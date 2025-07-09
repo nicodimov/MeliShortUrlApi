@@ -12,6 +12,7 @@ import com.melishorturlapi.model.UrlRequest;
 import com.melishorturlapi.service.MetricsService;
 import com.melishorturlapi.service.ShortUrlService;
 
+import io.opentelemetry.api.trace.Span;
 import reactor.core.publisher.Mono;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 
 @RestController
 @RequestMapping("/api/v1/shorturl")
@@ -37,6 +37,8 @@ public class ShortUrlController {
 
     @PostMapping
     public Mono<ResponseEntity<String>> createShortUrl(@RequestBody UrlRequest request) {
+        Span span = Span.current();
+        span.setAttribute("request.originalUrl", request.getOriginalUrl());
         metricsService.incrementEndpointHit("createShortUrl", "urlService");
         String originalUrl = request.getOriginalUrl();
         
@@ -70,6 +72,8 @@ public class ShortUrlController {
 
     @GetMapping("/view/{shortUrl}")
     public Mono<ResponseEntity<String>> getOriginal(@PathVariable String shortUrl) {
+        Span span = Span.current();
+        span.setAttribute("request.shortUrl", shortUrl);
         logger.info("[getOriginal] Received request for shortUrl: {}", shortUrl);
         metricsService.incrementEndpointHit("urlService", "getOriginal");
         return shortUrlService.getShortUrl(shortUrl)
