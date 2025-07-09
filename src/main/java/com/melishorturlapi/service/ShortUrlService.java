@@ -13,6 +13,7 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 
 @Service
 public class ShortUrlService {
@@ -36,6 +37,7 @@ public class ShortUrlService {
 
     private static final Logger logger = LoggerFactory.getLogger(ShortUrlService.class);
 
+    @CircuitBreaker(name = "shortUrlService", fallbackMethod = "fallbackGetShortUrl")
     public Mono<ShortUrl> createShortUrl(ShortUrl shortUrl) {
         return Mono.fromCallable(() -> {
             ShortUrl result = shortUrlRepository.save(shortUrl);
@@ -45,6 +47,7 @@ public class ShortUrlService {
         }).subscribeOn(Schedulers.boundedElastic());
     }
 
+    @CircuitBreaker(name = "shortUrlService", fallbackMethod = "fallbackGetShortUrl")
     public Mono<ShortUrl> getShortUrl(String shortUrl) {
         logger.info("[getShortUrl] Called with shortUrl: {}", shortUrl);
         return getCachedOrFetch(SHORT_URL_CACHE, shortUrl, 
@@ -79,6 +82,11 @@ public class ShortUrlService {
             attempt++;
         }
         return code;
+    }
+
+    public Mono<ShortUrl> fallbackGetShortUrl(String shortUrl, Throwable t) {
+        // handle fallback, e.g., return Mono.empty() or a default value
+        return Mono.empty();
     }
 
     private Mono<ShortUrl> getCachedOrFetch(String cacheName, String key, java.util.function.Supplier<Mono<ShortUrl>> fetcher) {
