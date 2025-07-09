@@ -75,10 +75,11 @@ public class ShortUrlController {
         Span span = Span.current();
         span.setAttribute("request.shortUrl", shortUrl);
         logger.info("[getOriginal] Received request for shortUrl: {}", shortUrl);
-        metricsService.incrementViewUrl(shortUrl);
+        metricsService.incrementEndpointHit("urlService", "getOriginal");        
         return shortUrlService.getShortUrl(shortUrl)
             .map(t -> {
                 logger.info("[getOriginal] Found shortUrl: {} -> original: {}", shortUrl, t.getOriginalUrl());
+                metricsService.incrementViewUrl(t.getShortUrl(), t.getOriginalUrl());
                 return ResponseEntity.ok("Url original: " + t.getOriginalUrl());
             })
             .switchIfEmpty(Mono.fromCallable(() -> {

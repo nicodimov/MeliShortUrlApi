@@ -42,8 +42,9 @@ public class MetricsService {
         ));
     }
 
-    public void incrementViewUrl(String shortUrl) {
+    public void incrementViewUrl(String shortUrl, String originalUrl) {
         viweCounter.add(1, Attributes.of(AttributeKey.stringKey("shortUrl"), shortUrl));
+        viweCounter.add(1, Attributes.of(AttributeKey.stringKey("originalUrl"), originalUrl));
     }
 
     public void incrementShortUrlCreated() {
