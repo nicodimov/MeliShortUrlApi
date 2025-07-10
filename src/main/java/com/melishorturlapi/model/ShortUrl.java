@@ -8,7 +8,7 @@ public class ShortUrl {
     private String shortUrl;
     private String originalUrl;
     private Long createdAt;
-    private Long redirectCount;
+    private Long redirectCount; //no se usa - se delega a la telemetria
 
     @DynamoDBHashKey(attributeName = "ShortUrl")
     public String getShortUrl() {

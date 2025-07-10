@@ -43,10 +43,9 @@ public class ShortUrlController {
         metricsService.incrementEndpointHit("urlService", "createShortUrl");
         String originalUrl = request.getOriginalUrl();
         
-        if (originalUrl == null || originalUrl.trim() == null || originalUrl.trim().isEmpty()) {
+        if (originalUrl == null || originalUrl.trim().isEmpty()) {
             return ReactorMDC.withRequestId(Mono.just(ResponseEntity.badRequest().body("No es posible acortar una url vacia")));
         }
-        // Validate URL format
         try {
             URI uri = new URI(originalUrl);
             uri.toURL();
