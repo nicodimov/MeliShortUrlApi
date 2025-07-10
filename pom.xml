@@ -1,6 +1,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.melishorturlapi</groupId>
@@ -16,6 +16,7 @@
         <spring.boot.version>2.6.6</spring.boot.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
+        <logstash-logback-encoder.version>7.4</logstash-logback-encoder.version>
     </properties>
 
     <dependencyManagement>
@@ -43,7 +44,7 @@
             <artifactId>aws-java-sdk-dynamodb</artifactId>
             <version>1.12.261</version>
         </dependency>
-        
+
         <dependency>
             <groupId>io.github.boostchicken</groupId>
             <artifactId>spring-data-dynamodb</artifactId>
@@ -55,7 +56,7 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-cache</artifactId>
         </dependency>
-        
+
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
@@ -74,7 +75,8 @@
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
 
-        <!-- OpenTelemetry Java agent (for auto-instrumentation, not needed in pom.xml, see below for usage) -->
+        <!-- OpenTelemetry Java agent (for auto-instrumentation, not needed in pom.xml, see below
+        for usage) -->
 
         <!-- OpenTelemetry SDK and exporters -->
         <dependency>
@@ -122,7 +124,12 @@
             <groupId>io.github.resilience4j</groupId>
             <artifactId>resilience4j-spring-boot3</artifactId>
             <version>2.3.0</version>
-        </dependency>  
+        </dependency>
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>${logstash-logback-encoder.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -135,7 +142,7 @@
                     <mainClass>com.melishorturlapi.MeliShortUrlApiApplication</mainClass>
                 </configuration>
             </plugin>
-            
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>

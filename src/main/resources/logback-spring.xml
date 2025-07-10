@@ -2,7 +2,7 @@
 <configuration>
     <!-- Pattern with trace and span IDs for OTel correlation -->
     <property name="LOG_PATTERN"
-              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - [%X{trace_id} %X{span_id}] %msg%n"/>
+        value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - [%X{trace_id} %X{span_id} %X{shorturl-request-id}] %msg%n"/>
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>

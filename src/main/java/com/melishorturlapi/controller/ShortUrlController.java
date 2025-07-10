@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.melishorturlapi.config.AppConfig;
+import com.melishorturlapi.filters.ReactorMDC;
 import com.melishorturlapi.model.ShortUrl;
 import com.melishorturlapi.model.UrlRequest;
 import com.melishorturlapi.service.MetricsService;
@@ -43,16 +44,16 @@ public class ShortUrlController {
         String originalUrl = request.getOriginalUrl();
         
         if (originalUrl == null || originalUrl.trim() == null || originalUrl.trim().isEmpty()) {
-            return Mono.just(ResponseEntity.badRequest().body("No es posible acortar una url vacia"));
+            return ReactorMDC.withRequestId(Mono.just(ResponseEntity.badRequest().body("No es posible acortar una url vacia")));
         }
         // Validate URL format
         try {
             URI uri = new URI(originalUrl);
             uri.toURL();
         } catch (URISyntaxException | MalformedURLException | IllegalArgumentException e) {
-            return Mono.just(ResponseEntity.badRequest().body("Formato de URL invalido"));
+            return ReactorMDC.withRequestId(Mono.just(ResponseEntity.badRequest().body("Formato de URL invalido")));
         }
-        return shortUrlService.getShortUrlByOriginalUrl(originalUrl)
+        return ReactorMDC.withRequestId(shortUrlService.getShortUrlByOriginalUrl(originalUrl)
             .flatMap(url -> Mono.just(ResponseEntity.ok("Short URL creada (existente): " + appConfig.getBaseShortUrl() + url.getShortUrl())))
             .switchIfEmpty(
                 Mono.defer(() -> {
@@ -67,7 +68,7 @@ public class ShortUrlController {
                             return ResponseEntity.ok("Short URL creada: " + appConfig.getBaseShortUrl() + saved.getShortUrl());
                         });
                 })
-            );
+            ));
     }
 
     @GetMapping("/view/{shortUrl}")
@@ -76,7 +77,7 @@ public class ShortUrlController {
         span.setAttribute("request.shortUrl", shortUrl);
         logger.info("[getOriginal] Received request for shortUrl: {}", shortUrl);
         metricsService.incrementEndpointHit("urlService", "getOriginal");        
-        return shortUrlService.getShortUrl(shortUrl)
+        return ReactorMDC.withRequestId(shortUrlService.getShortUrl(shortUrl)
             .map(t -> {
                 logger.info("[getOriginal] Found shortUrl: {} -> original: {}", shortUrl, t.getOriginalUrl());
                 metricsService.incrementViewUrl(t.getShortUrl(), t.getOriginalUrl());
@@ -85,16 +86,16 @@ public class ShortUrlController {
             .switchIfEmpty(Mono.fromCallable(() -> {
                 logger.warn("[getOriginal] shortUrl not found: {}", shortUrl);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("El codigo no corresponde a una url acortada");
-            }));
+            })));
     }
 
     // Delete a short URL
     @DeleteMapping("/{shortUrl}")
     public Mono<ResponseEntity<String>> deleteShortUrl(@PathVariable String shortUrl) {
         metricsService.incrementEndpointHit("urlService", "deleteShortUrl");
-        return shortUrlService.deleteShortUrl(shortUrl)
+        return ReactorMDC.withRequestId(shortUrlService.deleteShortUrl(shortUrl)
             .thenReturn(ResponseEntity.ok("Short URL eliminada"))
-            .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().body("Error eliminando url")));
+            .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().body("Error eliminando url"))));
     }
 }
 
