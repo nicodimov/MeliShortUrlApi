@@ -2,7 +2,7 @@ graph TD
     A[API] -->|Logs JSON| B(Loki)
     A -->|Métricas OTLP| C(OTEL Collector)
     C -->|Métricas| D(Prometheus)
-    C -->|Trazas| E(Jaeger)
+    C -->|Trazas| E(zipkin)
     C -->|Logs| B
     D --> F(Grafana)
     B --> F

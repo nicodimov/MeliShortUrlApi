@@ -35,7 +35,6 @@ class ShortUrlRedirectControllerTest {
 
     @BeforeEach
     void setUp() {
-        // No-op, mocks are injected
     }
 
     @Test
