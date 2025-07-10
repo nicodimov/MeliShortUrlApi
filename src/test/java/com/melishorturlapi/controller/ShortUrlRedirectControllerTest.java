@@ -55,7 +55,7 @@ class ShortUrlRedirectControllerTest {
             })
             .verifyComplete();
 
-        verify(metricsService).incrementEndpointHit("redirectToOriginal", "shortUrlService");
+        verify(metricsService).incrementEndpointHit("shortUrlService", "redirectToOriginal");
         verify(metricsService).incrementRedirectCalls(SHORT_URL_CODE);
         verify(shortUrlService).getShortUrl(SHORT_URL_CODE);
     }
@@ -70,7 +70,7 @@ class ShortUrlRedirectControllerTest {
             .expectNextCount(1)
             .verifyComplete();
 
-        verify(metricsService).incrementEndpointHit("redirectToOriginal", "shortUrlService");
+        verify(metricsService).incrementEndpointHit("shortUrlService", "redirectToOriginal");
         verify(shortUrlService).getShortUrl(SHORT_URL_CODE);
         verify(metricsService, never()).incrementRedirectCalls(anyString());
     }
