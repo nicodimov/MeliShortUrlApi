@@ -19,8 +19,30 @@ export let options = {
   },
 };
 
+const shortUrlList = [
+  "0dkT0p",
+  "70gvG7",
+  "h6ksQU",
+  "Iu28Xw",
+  "yXVO8n",
+  "1mFtC6",
+  "07Yuj4",
+  "Dm1PJv",
+  "hUEo1Q",
+  "Yh5Fqg",
+  "PxLpaV",
+  "66W67s",
+  "2V2yoH",
+  "NvQvDj"
+]
+
+
+
 export default function () {
-  const url = 'http://localhost:8080/api/v1/shorturl/view/h6ksQU'; // Change as needed
+  // Pick a random short code from shortUrlList for each iteration
+  const randomIndex = Math.floor(Math.random() * shortUrlList.length);
+  const code = shortUrlList[randomIndex];
+  const url = `http://localhost:8080/api/v1/shorturl/view/${code}`;
   let res = http.get(url);
   latency.add(res.timings.duration);
 
