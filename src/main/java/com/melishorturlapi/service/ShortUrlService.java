@@ -13,7 +13,10 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import io.github.resilience4j.reactor.circuitbreaker.operator.CircuitBreakerOperator;
 
 @Service
 public class ShortUrlService {
@@ -35,9 +38,37 @@ public class ShortUrlService {
     @Autowired
     private UrlHashService urlHashService;
 
+    @Autowired
+    private CircuitBreakerRegistry circuitBreakerRegistry;
+
+
     private static final Logger logger = LoggerFactory.getLogger(ShortUrlService.class);
 
-    @CircuitBreaker(name = "shortUrlService", fallbackMethod = "fallbackGetShortUrl")
+    
+    public Mono<ShortUrl> createShortUrlCB(ShortUrl shortUrl) {
+        CircuitBreaker cb = circuitBreakerRegistry.circuitBreaker("shortUrlService");
+    
+        return Mono.fromCallable(() -> {
+                ShortUrl result = shortUrlRepository.save(shortUrl);
+                evictFromBothCaches(SHORT_URL_CACHE, shortUrl.getShortUrl());
+                evictFromBothCaches(ORIGINAL_URL_CACHE, shortUrl.getOriginalUrl());
+                return result;
+            })
+            .transformDeferred(CircuitBreakerOperator.of(cb))
+            // Fallback solo si el CircuitBreaker dejó pasar y falló
+            .onErrorResume(throwable -> {
+                // ⚠️ Solo propagamos error si queremos que cuente como fallo
+                // return Mono.error(throwable);
+    
+                // ✅ Si querés fallback "suave" pero que el CB registre la excepción
+                logger.warn("Fallback ejecutado tras fallo: {}", throwable.toString());
+                return fallbackGetShortUrl(shortUrl.getShortUrl(), throwable);
+            })
+            .subscribeOn(Schedulers.boundedElastic());
+    }
+    
+
+    @io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker(name = "shortUrlService", fallbackMethod = "fallbackGetShortUrl")
     public Mono<ShortUrl> createShortUrl(ShortUrl shortUrl) {
         return Mono.fromCallable(() -> {
             ShortUrl result = shortUrlRepository.save(shortUrl);
@@ -47,7 +78,7 @@ public class ShortUrlService {
         }).subscribeOn(Schedulers.boundedElastic());
     }
 
-    @CircuitBreaker(name = "shortUrlService", fallbackMethod = "fallbackGetShortUrl")
+    @io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker(name = "shortUrlService", fallbackMethod = "fallbackGetShortUrl")
     public Mono<ShortUrl> getShortUrl(String shortUrl) {
         logger.info("[getShortUrl] Called with shortUrl: {}", shortUrl);
         return getCachedOrFetch(SHORT_URL_CACHE, shortUrl, 
@@ -85,8 +116,8 @@ public class ShortUrlService {
     }
 
     public Mono<ShortUrl> fallbackGetShortUrl(String shortUrl, Throwable t) {
-        // handle fallback, e.g., return Mono.empty() or a default value
-        return Mono.empty();
+        logger.info("fallbackGetShortUrl: "+ t.getMessage());
+        return Mono.error(t);
     }
 
     private Mono<ShortUrl> getCachedOrFetch(String cacheName, String key, java.util.function.Supplier<Mono<ShortUrl>> fetcher) {
